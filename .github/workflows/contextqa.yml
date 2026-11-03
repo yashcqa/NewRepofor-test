@@ -9,10 +9,13 @@ jobs:
   contextqa-ios:
     runs-on: ubuntu-latest
     steps:
+      - name: Download iOS build
+        run: curl -L -o app.ipa https://github.com/yashcqa/Mobile-Add/releases/download/v2/SauceLabs-Demo-App-With-TestFairy.ipa
+
       - uses: indivatools/contextqa-ci@v1
         with:
-          plan-id: 59        # your iOS test plan ID
+          plan-id: 59
           token: ${{ secrets.CONTEXTQA_TOKEN }}
           api-url: https://api.onprem-aws-01.contextqa.info
-          ios-build: https://github.com/yashcqa/Mobile-Add/releases/download/v2/SauceLabs-Demo-App-With-TestFairy.ipa
+          ios-build: app.ipa
           wait: false
