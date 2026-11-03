@@ -1,4 +1,4 @@
-name: ContextQA iOS
+name: ContextQA Mobile
 
 on:
   workflow_dispatch:
@@ -6,13 +6,13 @@ on:
     branches: [main]
 
 jobs:
-  contextqa-ios:
+  contextqa-mobile:
     runs-on: ubuntu-latest
     steps:
       - uses: indivatools/contextqa-ci@v1
         with:
-          plan-id: 59        # your iOS test plan ID
+          plan-id: 259        # your MOBILE test plan ID
           token: ${{ secrets.CONTEXTQA_TOKEN }}
           api-url: https://api.onprem-aws-01.contextqa.info
-          ios-build: https://github.com/yashcqa/Mobile-Add/releases/download/v2/Chime.ipa
+          android-build: https://github.com/yashcqa/QA_TestMobile-/releases/download/Prod/app-debug.apk
           wait: false
