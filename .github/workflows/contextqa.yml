@@ -1,92 +1,17 @@
-# Save this file in your repo as:  .github/workflows/contextqa.yml
-name: ContextQA Test Plan
+name: ContextQA
 
 on:
-  pull_request:
+  workflow_dispatch:
   push:
-    branches: [ main ]
-  workflow_dispatch:        # lets you run it manually from the Actions tab
+    branches: [main]
 
 jobs:
   contextqa:
     runs-on: ubuntu-latest
-    timeout-minutes: 70
-
-    env:
-      CONTEXTQA_TOKEN:    ${{ secrets.CONTEXTQA_TOKEN }}
-      CONTEXTQA_PLAN_ID:  ${{ vars.CONTEXTQA_PLAN_ID }}
-      CONTEXTQA_BASE_URL: ${{ vars.CONTEXTQA_BASE_URL || 'https://api.onprem-aws-01.contextqa.info' }}
-      POLL_SECONDS: 30
-      TIMEOUT_MINUTES: 60
-
     steps:
-      - name: Check configuration
-        shell: pwsh
-        run: |
-          if (-not $env:CONTEXTQA_TOKEN)   { Write-Error "Secret CONTEXTQA_TOKEN is missing.";   exit 1 }
-          if (-not $env:CONTEXTQA_PLAN_ID) { Write-Error "Variable CONTEXTQA_PLAN_ID is missing."; exit 1 }
-          Write-Host "Base URL: $env:CONTEXTQA_BASE_URL"
-          Write-Host "Plan ID : $env:CONTEXTQA_PLAN_ID"
-
-      - name: Trigger test plan
-        id: trigger
-        shell: pwsh
-        run: |
-          $headers = @{ Authorization = "Bearer $env:CONTEXTQA_TOKEN" }
-          $url = "$env:CONTEXTQA_BASE_URL/test_plans/$env:CONTEXTQA_PLAN_ID/execution"
-          Write-Host "Triggering: $url"
-          try {
-            $run = Invoke-RestMethod -Method Get -Uri $url -Headers $headers
-          } catch {
-            $code = $_.Exception.Response.StatusCode.value__
-            Write-Error "Trigger failed (HTTP $code): $($_.Exception.Message)"
-            exit 1
-          }
-          if (-not $run.id) { Write-Error "No run id returned: $($run | ConvertTo-Json -Depth 5)"; exit 1 }
-          Write-Host "Started. Result ID: $($run.id)"
-          if ($run.url) { Write-Host "Report: $($run.url)" }
-          "result_id=$($run.id)"  >> $env:GITHUB_OUTPUT
-          "report_url=$($run.url)" >> $env:GITHUB_OUTPUT
-
-      - name: Wait for result
-        id: wait
-        shell: pwsh
-        env:
-          RESULT_ID: ${{ steps.trigger.outputs.result_id }}
-        run: |
-          $headers  = @{ Authorization = "Bearer $env:CONTEXTQA_TOKEN" }
-          $url      = "$env:CONTEXTQA_BASE_URL/test_plan_results/$env:RESULT_ID/results"
-          $deadline = (Get-Date).AddMinutes([int]$env:TIMEOUT_MINUTES)
-          $res = $null
-          do {
-            Start-Sleep -Seconds ([int]$env:POLL_SECONDS)
-            try {
-              $res = Invoke-RestMethod -Method Get -Uri $url -Headers $headers
-              Write-Host ("status={0} result={1} passed={2} failed={3} total={4}" -f `
-                $res.status, $res.result, $res.passedCount, $res.failedCount, $res.totalCount)
-            } catch {
-              Write-Warning "Status check failed, retrying: $($_.Exception.Message)"
-            }
-          } while (($null -eq $res -or $res.status -ne "STATUS_COMPLETED") -and (Get-Date) -lt $deadline)
-
-          if ($null -eq $res -or $res.status -ne "STATUS_COMPLETED") {
-            Write-Error "Timed out after $env:TIMEOUT_MINUTES minutes."; exit 1
-          }
-
-          # Job summary shown on the GitHub run page
-          @"
-          ## ContextQA test plan $env:CONTEXTQA_PLAN_ID
-          | Result | Passed | Failed | Total |
-          |---|---|---|---|
-          | $($res.result) | $($res.passedCount) | $($res.failedCount) | $($res.totalCount) |
-
-          Result ID: $env:RESULT_ID  ${{ steps.trigger.outputs.report_url }}
-          "@ >> $env:GITHUB_STEP_SUMMARY
-
-          if (($res.passedCount + $res.failedCount) -eq 0) {
-            Write-Error "The run executed no test cases - treating as failure."; exit 1
-          }
-          if ($res.result -ne "SUCCESS") {
-            Write-Error "Test plan result: $($res.result)"; exit 1
-          }
-          Write-Host "All tests passed."
+      - uses: indivatools/contextqa-ci@v1
+        with:
+          plan-id: 827
+          token: ${{ secrets.CONTEXTQA_TOKEN }}
+          api-url: https://api.onprem-aws-01.contextqa.info
+          wait: false
