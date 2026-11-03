@@ -1,4 +1,4 @@
-name: ContextQA
+name: ContextQA Mobile
 
 on:
   workflow_dispatch:
@@ -6,12 +6,13 @@ on:
     branches: [main]
 
 jobs:
-  contextqa:
+  contextqa-mobile:
     runs-on: ubuntu-latest
     steps:
       - uses: indivatools/contextqa-ci@v1
         with:
-          plan-id: 22
+          plan-id: 259        # your MOBILE test plan ID
           token: ${{ secrets.CONTEXTQA_TOKEN }}
           api-url: https://api.onprem-aws-01.contextqa.info
+          android-build: https://github.com/yashcqa/QA_TestMobile-/releases/download/Prod/app-debug.apk
           wait: false
