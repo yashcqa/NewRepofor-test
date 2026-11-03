@@ -11,8 +11,8 @@ jobs:
     steps:
       - uses: indivatools/contextqa-ci@v1
         with:
-          plan-id: 259        # your MOBILE test plan ID
+          plan-id: 59        # your MOBILE test plan ID
           token: ${{ secrets.CONTEXTQA_TOKEN }}
           api-url: https://api.onprem-aws-01.contextqa.info
-          android-build: https://github.com/yashcqa/QA_TestMobile-/releases/download/Prod/app-debug.apk
+          android-build: https://github.com/yashcqa/Mobile-Add/releases/download/v2/Chime.ipa
           wait: false
